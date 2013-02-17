@@ -3,13 +3,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 import com.sun.jdi.*;
-import com.sun.jdi.event.*;
-import com.sun.jdi.request.*;
 
 
 public class vmAccess {
 
 public static ArrayList<LocalVariable> cs = new ArrayList<LocalVariable>();
+
+  static Data toGraph = new Data();
 
   public vmAccess()
       throws IOException, InterruptedException {
@@ -32,8 +32,10 @@ public static ArrayList<LocalVariable> cs = new ArrayList<LocalVariable>();
 	  List<ThreadReference> tr = vm.allThreads();
 	  
 	  //create new data repository
-	  Data d = new Data();
-	    
+	  toGraph.addVertex("Main", "Main");
+	  int currVertex = 0;
+	  int nextVertex;
+	  
 	    try {
 		    	//Get number of stack frames
 		    	List<StackFrame> sf = tr.get(3).frames();
@@ -58,23 +60,69 @@ public static ArrayList<LocalVariable> cs = new ArrayList<LocalVariable>();
 					  //Display helpful information
 				      System.out.println(type + " : " + name + " : " + value + " : " + sig);
 				      
+				      //Create connection between main and what is in the stack
+				      int currEdge = toGraph.addEdge(name);
+				      
 				      //If local variable in the stack is an object find it in the virtual machine
 				      //Check if it has any fields. start dfs
 				      
-				      if ((value) instanceof ArrayReference) System.out.println(vv.get(k).name() + " is an array");
-				      else if ((value) instanceof StringReference) System.out.println(vv.get(k).name() + " is a String"); 
+				      if ((value) instanceof ArrayReference) {
+				    	  
+				    	  //add Connection
+				    	  nextVertex = toGraph.addVertex("ArrayReference", "Array");
+				    	  toGraph.addConnection(currEdge, currVertex, nextVertex);
+				    	  currVertex = nextVertex;
+				    	  
+				    	  //Get array values and component type of array
+				    	  
+				    	  ArrayReference ar = (ArrayReference) value;
+				    	  List arrayValues = ar.getValues();
+				    	  ArrayType newType = (ArrayType) type;
+				    	  Type ct = newType.componentType();
+				    	  
+				    	  //add Connections from array to each of its children
+				    	  for(int z = 0; z < ar.length(); z++){
+				    		  currEdge = toGraph.addEdge("From Array");
+				    		  nextVertex = toGraph.addVertex( (String)arrayValues.get(z), ct.toString());
+				    		  toGraph.addConnection(currEdge, currVertex, nextVertex);
+				    	  }
+				    	  
+				    	  //System.out.println(vv.get(k).name() + " is an array");
+				      }
+				      else if ((value) instanceof StringReference) {
+				    	  
+				    	  //add Connection
+				    	  nextVertex = toGraph.addVertex(value.toString(), "String");
+				    	  toGraph.addConnection(currEdge, currVertex, nextVertex);
+				    	  
+				    	  //System.out.println(vv.get(k).name() + " is a String"); 
+				      }
 				      else if ((value) instanceof ObjectReference) {
 				    	  
-				    	    //data.addVertex(new vertexInfo())
+				    	  //add connection to object reference
+				    	  nextVertex = toGraph.addVertex("ObjectReference", "Object");
+				    	  toGraph.addConnection(currEdge, currVertex, nextVertex);
+				    	  currVertex = nextVertex;
+				    	   
 				    	  //How to get fields and values
 				    	  ObjectReference or = (ObjectReference) value;
-				    	  DFS(or);
+				    	  DFS(or, currVertex);
 		
 				      }
 				      
-				      else if(value.equals(null)){}
-				      else {
-				    	  System.out.println(vv.get(k).name() + " is a " + type + " with value " + value);
+				      else if(value.equals(null)){
+				    	  //add Connection
+				    	  nextVertex = toGraph.addVertex("null", "null");
+				    	  toGraph.addConnection(currEdge, currVertex, nextVertex);
+				      }
+				      
+				      //If type is a primitive 
+				      else if(value instanceof PrimitiveValue){
+				    	  
+				    	  nextVertex = toGraph.addVertex(value.toString(), type.toString());
+				    	  toGraph.addConnection(currEdge, currVertex, nextVertex);
+				    	  
+				    	  //System.out.println(vv.get(k).name() + " is a " + type + " with value " + value);
 				      }
 				      
 				   }
@@ -95,7 +143,7 @@ public static ArrayList<LocalVariable> cs = new ArrayList<LocalVariable>();
   }
   
   
-  static void DFS(ObjectReference or){
+  static void DFS(ObjectReference or, int currVertex){
 		Stack<ObjectReference> s = new Stack<ObjectReference>();
 		//ArrayList<Vertex> send = new ArrayList<Vertex>();
 		ObjectReference popped;
@@ -120,6 +168,10 @@ public static ArrayList<LocalVariable> cs = new ArrayList<LocalVariable>();
 				
 		}
 		
+  }
+  
+  static void processArray(ArrayReference ar){
+	  
   }
   
 

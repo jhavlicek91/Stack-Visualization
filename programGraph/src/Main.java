@@ -22,7 +22,7 @@ public class Main {
 		
 		//Access the Virtual Machine
 		vmAccess vma = new vmAccess();
-		
+		Data d = vma.toGraph;
 		
 		
 	}
