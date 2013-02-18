@@ -30,7 +30,18 @@ public class Data {
 	}
 	
 	public void addConnection(int edge, int v1, int v2){
-		//connections.add
+		
+		//Check if vertex already exists in the map
+		
+		if( connections.containsKey(v1) ) {
+			connections.get(v1).put(v2, edge);
+		}
+		
+		else {
+			connections.put(v1, new HashMap<Integer, Integer>());
+			connections.get(v1).put(v2, edge);
+			
+		}
 	}
 	
 	
