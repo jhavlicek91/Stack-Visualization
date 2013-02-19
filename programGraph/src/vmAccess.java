@@ -1,5 +1,6 @@
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Stack;
 import com.sun.jdi.*;
@@ -10,13 +11,13 @@ public class vmAccess {
 public static ArrayList<LocalVariable> cs = new ArrayList<LocalVariable>();
 
    static Data toGraph = new Data();
-   static int currVertex = 0;
-   static int nextVertex;
-   static int fromMain = 0;
-   static int currEdge;
+   static Vertex currVertex;
+   static Vertex nextVertex;
+   static Edge currEdge;
+   static String currEdgeName;
 
   public vmAccess()
-      throws IOException, InterruptedException {
+      throws IOException, InterruptedException, IncompatibleThreadStateException, ClassNotLoadedException {
 	  
     //Connect to virtual machine
     VirtualMachine vm = new vmAcquirer().connect(8000);
@@ -32,55 +33,46 @@ public static ArrayList<LocalVariable> cs = new ArrayList<LocalVariable>();
   }
 
   /* Print the stack */
-  private static void accessStack(VirtualMachine vm) {
-	  List<ThreadReference> tr = vm.allThreads();
-	  
-	  //create new data repository
-	  toGraph.addVertex("Main", "Main");
-	  
-	    try {
+  private static void accessStack(VirtualMachine vm) throws IncompatibleThreadStateException, ClassNotLoadedException  {
+	 	    	
+	    	 	List<ThreadReference> tr = vm.allThreads();
+	
 		    	//Get number of stack frames
 		    	List<StackFrame> sf = tr.get(3).frames();
 			    int fc = tr.get(3).frameCount();
+			    System.out.println(fc);
 			    
 			    
 			    //Go through each stack frame and collect variables
-				for(int j = 1; j < fc; j++){
+				for(int j = 0; j < fc; j++){
 					
-				   List<LocalVariable> vv = sf.get(j).visibleVariables();
-				   
-				   //Go through each variable
-				   for(int k = 0; k < vv.size(); k++){
-					   
-					  LocalVariable ll = vv.get(k);
-					  Value value = sf.get(j).getValue(ll);
+				   try {
+					   List<LocalVariable> vv = sf.get(j).visibleVariables();
 					  
-					  //Gather data from the variable
-					  Type type = ll.type();
-					  String name = ll.name();
-					  
-					  addToGraph(type, name, value);
-					  
-				      
-				      fromMain++;
+					   //Go through each variable
+					   for(int k = 0; k < vv.size(); k++){
+						   
+						  LocalVariable ll = vv.get(k);
+						  Value value = sf.get(j).getValue(ll);
+						  
+						  //Gather data from the variable
+						  Type type = ll.type();
+						  String name = ll.name();
+						  
+						  currVertex = toGraph.addVertex("Main", "Main");
+						  
+						  addToGraph(type, name, value);
+					   }
 				   }
-				}
-				
-				System.out.println(fromMain);
-					   			
-		} 
-	    
-	    catch (IncompatibleThreadStateException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace(); } 
-	    catch (AbsentInformationException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace(); } 
-	    catch (ClassNotLoadedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
+				   
+				    catch (AbsentInformationException e) {
+						// TODO Auto-generated catch block
+						//e.printStackTrace();
+				    	System.out.println("Cannot trace Stack frame" + j);
+				    	} 
+				   		   
+				}				
+					   			    
   }
   
   
@@ -92,7 +84,7 @@ public static ArrayList<LocalVariable> cs = new ArrayList<LocalVariable>();
 	      //System.out.println(type + " : " + name + " : " + value );
 	      
 	      //Create connection between main and what is in the stack
-	      currEdge = toGraph.addEdge(name);
+	      currEdgeName = name;
 	      
 	      //If local variable in the stack is an object find it in the virtual machine
 	      //Check if it has any fields. start dfs
@@ -101,6 +93,7 @@ public static ArrayList<LocalVariable> cs = new ArrayList<LocalVariable>();
 	    	  
 	    	  //add Connection
 	    	  nextVertex = toGraph.addVertex(value.toString(), "String");
+	    	  currEdge = toGraph.addEdge(name, currVertex, nextVertex);
 	    	  toGraph.addConnection(currEdge, currVertex, nextVertex);
 	    	  
 	      }
@@ -109,6 +102,7 @@ public static ArrayList<LocalVariable> cs = new ArrayList<LocalVariable>();
 	    	  
 	    	  if(name.equals("b") || name.equals("buffer") || name.equals("args")) {
 	    		  nextVertex = toGraph.addVertex(value.toString(), "Array Reference");
+	    		  currEdge = toGraph.addEdge(name, currVertex, nextVertex);
 		    	  toGraph.addConnection(currEdge, currVertex, nextVertex);
 	    	  }
 	    	  
@@ -116,6 +110,7 @@ public static ArrayList<LocalVariable> cs = new ArrayList<LocalVariable>();
 	    		  
 		    	  //add Connection
 		    	  nextVertex = toGraph.addVertex(value.toString(), "Array Reference");
+		    	  currEdge = toGraph.addEdge(name, currVertex, nextVertex);
 		    	  toGraph.addConnection(currEdge, currVertex, nextVertex);
 		    	  currVertex = nextVertex;
 		    	  
@@ -128,8 +123,8 @@ public static ArrayList<LocalVariable> cs = new ArrayList<LocalVariable>();
 		    	  
 		    	  //add Connections from array to each of its children
 		    	  for(int z = 0; z < ar.length(); z++){
-		    		  currEdge = toGraph.addEdge("From Array");
 		    		  nextVertex = toGraph.addVertex( arrayValues.get(z).toString(), ct.toString());
+		    		  currEdge = toGraph.addEdge("From Array", currVertex, nextVertex);
 		    		  toGraph.addConnection(currEdge, currVertex, nextVertex);
 		    	  }
 	    	  }
@@ -141,19 +136,21 @@ public static ArrayList<LocalVariable> cs = new ArrayList<LocalVariable>();
 	    	  
 	    	  //add connection to object reference
 	    	  nextVertex = toGraph.addVertex(value.toString(), "Object Reference");
+	    	  currEdge = toGraph.addEdge(name, currVertex, nextVertex);
 	    	  toGraph.addConnection(currEdge, currVertex, nextVertex);
 	    	  currVertex = nextVertex;
 	    	   
 	    	  //How to get fields and values
 	    	  ObjectReference or = (ObjectReference) value;
-	    	  DFS(or, currVertex);
+	    	  DFS(or);
 	
 	      }
 	      
 	      //If type is a primitive 
 	      else if(value instanceof PrimitiveValue){
 	    	  
-	    	  nextVertex = toGraph.addVertex(value.toString(), type.toString());
+	    	  nextVertex = toGraph.addVertex(value.toString(), "Primitive");
+	    	  currEdge = toGraph.addEdge(name, currVertex, nextVertex);
 	    	  toGraph.addConnection(currEdge, currVertex, nextVertex);
 	    	  
 	      }
@@ -162,6 +159,7 @@ public static ArrayList<LocalVariable> cs = new ArrayList<LocalVariable>();
 	      else {
 	    	  //add Connection
 	    	  nextVertex = toGraph.addVertex("null", "null");
+	    	  currEdge = toGraph.addEdge(name, currVertex, nextVertex);
 	    	  toGraph.addConnection(currEdge, currVertex, nextVertex);
 	      }
 	  }
@@ -172,10 +170,13 @@ public static ArrayList<LocalVariable> cs = new ArrayList<LocalVariable>();
 	  
   }
   
-  static void DFS(ObjectReference or, int currVertex) throws ClassNotLoadedException{
+  static void DFS(ObjectReference or) throws ClassNotLoadedException{
 		Stack<ObjectReference> s = new Stack<ObjectReference>();
 		ObjectReference popped;
 		s.push(or);
+		
+		ArrayList<Long> visited = new ArrayList<Long>();
+
 		
 		while(!s.isEmpty()){
 			popped = s.pop();
@@ -189,25 +190,30 @@ public static ArrayList<LocalVariable> cs = new ArrayList<LocalVariable>();
 	    		String name = f.name();
 	    		
 
-	    		//Need to make sure that it is not a java.lang class
-	    		if(fieldValue instanceof ObjectReference) {
-	    			
-	    			//Add data to graph
-	    			currEdge = toGraph.addEdge(name);
-	    			nextVertex = toGraph.addVertex(fieldValue.toString(), "Object Reference");
-	    			toGraph.addConnection(currEdge, currVertex, nextVertex);
-	    			currVertex = nextVertex;
-	    			
-	    			s.push( (ObjectReference) fieldValue);
-	    			//System.out.println(f + " is an object");
-	    		}
+		    	if(fieldValue instanceof ObjectReference ) { 
+		    			
+		    		if(!visited.contains( ((ObjectReference) fieldValue).uniqueID()) ) {
+		    			
+			    		visited.add( ((ObjectReference) fieldValue).uniqueID() );
+			    			
+			    		//Add data to graph
+			    		nextVertex = toGraph.addVertex(fieldValue.toString(), "Object Reference");
+			    		currEdge = toGraph.addEdge(name, currVertex, nextVertex);
+			    		toGraph.addConnection(currEdge, currVertex, nextVertex);
+			    		currVertex = nextVertex;
+			    			
+			    		s.push( (ObjectReference) fieldValue);
+		    		}
+		    	}
+		    		
+		    	else {
+		    		//Process data and add to graph
+		    		addToGraph(t, name, fieldValue);
+		    			
+		    	}
 	    		
-	    		else {
-	    			//Process data and add to graph
-	    			addToGraph(t, name, fieldValue);
-	    			//System.out.println(f + " is a variable with value " + fieldValue);
-	    		}
 	    	}
+
 				
 		}
 		

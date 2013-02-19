@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.HashMap;
 
 
@@ -6,30 +7,30 @@ public class Data {
 	int vid;
 	int eid;
 	
-	HashMap<Integer, vertexInfo> vertices = new HashMap<Integer, vertexInfo>(); //vertex id and relevant info
-	HashMap<Integer, String> edges = new HashMap<Integer, String>(); //edge id and name
-	HashMap<Integer, HashMap<Integer, Integer>> connections = new HashMap<Integer, HashMap<Integer, Integer>>(); //vertex and the edge id as well as the vertex id
+	ArrayList<Vertex> vertices = new ArrayList<Vertex>(); //vertex id and relevant info
+	ArrayList<Edge> edges = new ArrayList<Edge>(); //edge id and name
+	HashMap<Vertex, HashMap<Vertex, Edge>> connections = new HashMap<Vertex, HashMap<Vertex, Edge>>(); //vertex and the edge id as well as the vertex id
 	
 	public Data(){
 		this.vid = 0;
 		this.eid = 0;
 	}
 	
-	public int addVertex(String value, String type){
-		vertices.put(vid, new vertexInfo(value, type));
+	public Vertex addVertex(String value, String type){
+		vertices.add(new Vertex(vid, value, type));
 		vid++;
 		
-		return (vid - 1);
+		return vertices.get(vid - 1);
 	}
 	
-	public int addEdge(String value){
-		edges.put(eid, value);
+	public Edge addEdge(String name, Vertex source, Vertex destination){
+		edges.add( new Edge(eid, name, source, destination ));
 		eid++;
 		
-		return (eid - 1);
+		return edges.get(eid - 1);
 	}
 	
-	public void addConnection(int edge, int v1, int v2){
+	public void addConnection(Edge edge, Vertex v1, Vertex v2){
 		
 		//Check if vertex already exists in the map
 		
@@ -38,11 +39,13 @@ public class Data {
 		}
 		
 		else {
-			connections.put(v1, new HashMap<Integer, Integer>());
+			connections.put(v1, new HashMap<Vertex, Edge>());
 			connections.get(v1).put(v2, edge);
 			
 		}
 	}
+	
+
 	
 	
 	

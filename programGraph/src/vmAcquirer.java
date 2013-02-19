@@ -23,7 +23,6 @@ public class vmAcquirer {
 	    VirtualMachineManager vmManager = Bootstrap.virtualMachineManager();
 	    for (Connector connector : vmManager
 	        .attachingConnectors()) {
-	      //System.out.println(connector.name());
 	      if ("com.sun.jdi.SocketAttach".equals(connector.name())) {
 	        return (AttachingConnector) connector;
 	      }
