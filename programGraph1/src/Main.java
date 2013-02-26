@@ -1,6 +1,5 @@
 import java.io.IOException;
 import java.util.Scanner;
-
 import com.sun.jdi.ClassNotLoadedException;
 import com.sun.jdi.IncompatibleThreadStateException;
 
@@ -18,23 +17,23 @@ public class Main {
 	public static void main(String[] args) throws IOException, InterruptedException, IncompatibleThreadStateException, ClassNotLoadedException {
 		
 		//Get the name of the file to run
-		System.out.println("Enter the name of the file to run");
+		/*System.out.println("Enter the name of the file to run");
 		Scanner s = new Scanner(System.in);
-		String file = s.next();
+		String file = s.next();*/
+		
+		
 		
 		//Compile the file and set it to wait for virtual 
 		//machine to connect
-		runShell(file);
+		//runShell(file);
+
 		
 		//Access the Virtual Machine
-		vmAccess vma = new vmAccess();
+		new vmAccess();
 		Data d = vmAccess.toGraph;
 		
-		//Print out data
-		//for(int i=0; i < d.edges.size(); i++) System.out.println(d.edges.get(i).id + " " + d.edges.get(i).source.value + " " + d.edges.get(i).name + " " +  d.edges.get(i).destination.value);
-		
 		//call function for visualizing the info in data object
-		drawGraph g = new drawGraph(d);
+		new drawGraph(d);
 
 		
 	}
@@ -53,7 +52,7 @@ public class Main {
 				    Runtime.getRuntime().exec(cmd1).waitFor();
 				    Runtime.getRuntime().exec(cmd2).waitFor();
 				 
-				    Thread.sleep(10);
+				    Thread.sleep(15);
 				    
 				} catch (Exception e) {
 				    e.printStackTrace(System.err); }

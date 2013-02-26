@@ -1,6 +1,4 @@
 import java.util.ArrayList;
-import java.util.HashMap;
-
 
 public class Data {
 
@@ -9,7 +7,6 @@ public class Data {
 	
 	ArrayList<Vertex> vertices = new ArrayList<Vertex>(); //vertex id and relevant info
 	ArrayList<Edge> edges = new ArrayList<Edge>(); //edge id and name
-	HashMap<Vertex, HashMap<Vertex, Edge>> connections = new HashMap<Vertex, HashMap<Vertex, Edge>>(); //vertex and the edge id as well as the vertex id
 	
 	public Data(){
 		this.vid = 0;
@@ -30,19 +27,15 @@ public class Data {
 		return edges.get(eid - 1);
 	}
 	
-	public void addConnection(Edge edge, Vertex v1, Vertex v2){
+	
+	public Vertex getVertex(String value){
 		
-		//Check if vertex already exists in the map
 		
-		if( connections.containsKey(v1) ) {
-			connections.get(v1).put(v2, edge);
+		for(int i = 0; i < vertices.size(); i++){
+			if(vertices.get(i).value.equals(value)) return vertices.get(i);
 		}
 		
-		else {
-			connections.put(v1, new HashMap<Vertex, Edge>());
-			connections.get(v1).put(v2, edge);
-			
-		}
+		return (null);
 	}
 	
 

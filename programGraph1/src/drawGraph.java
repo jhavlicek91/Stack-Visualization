@@ -1,14 +1,12 @@
 import java.awt.BorderLayout;
 import javax.swing.JFrame;
 import com.mxgraph.layout.mxFastOrganicLayout;
-import com.mxgraph.layout.mxIGraphLayout;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.swing.util.mxMorphing;
 import com.mxgraph.util.mxEvent;
 import com.mxgraph.util.mxEventObject;
 import com.mxgraph.util.mxEventSource.mxIEventListener;
 import com.mxgraph.view.mxGraph;
-import java.util.ArrayList;
 import java.util.Hashtable;
 
 public class drawGraph {
@@ -42,21 +40,30 @@ public class drawGraph {
             for(i = 0; i < d.vertices.size(); i++){
             	
                 v = d.vertices.get(i);
-                if(v.type.equals("Array Reference"))       style = "fontColor=black;fillColor=#74A0EF";
+    
+                if (v.type.equals("String"))			    style = "fontColor=black;fillColor=#65AED";
+                else if(v.type.equals("Array Reference"))  style = "fontColor=black;fillColor=#74A0EF";
                 else if(v.type.equals("Object Reference")) style = "fontColor=black;fillColor=#FF8330";
                 else if(v.type.equals("Primitive"))        style = "fontColor=black;fillColor=#BCE640";
-                else                                       style = "fontColor=black;fillColor=#FF6262";
+                else if(v.type.equals("Frame"))				style = "fontColor=black;fillColor=#CCCCCC";
+                else                                        style = "fontColor=black;fillColor=#FF6262";
  
-                temp = graph.insertVertex(parent, null, d.vertices.get(i).value, xLoc, yLoc, 80, 30, style);
-                findVert.put(d.vertices.get(i).id, temp);
+                if(!findVert.containsKey(d.vertices.get(i).id)) {
+                	temp = graph.insertVertex(parent, null, d.vertices.get(i).value, xLoc, yLoc, 80, 30, style);
+                	findVert.put(d.vertices.get(i).id, temp);
+                	
+                }
                 yLoc += 50;
                 style = "";
                 
               }
             
-              for(i = 0; i < d.edges.size(); i++){
-                  graph.insertEdge(parent, null, d.edges.get(i).name, findVert.get(d.edges.get(i).source), findVert.get(d.edges.get(i).destination));
-               }
+            for(i = 0; i < d.edges.size(); i++){
+                temp = graph.insertVertex(parent, null, d.edges.get(i).name, xLoc, yLoc, 40, 20, "strokeColor=#EEEEEE;fillColor=#EEEEEE");
+                graph.insertEdge(parent, null, "", findVert.get(d.edges.get(i).source.id), temp, "endArrow=none");
+                graph.insertEdge(parent, null, "", temp, findVert.get(d.edges.get(i).destination.id));
+                
+            }
 
         } finally {
             graph.getModel().endUpdate();
@@ -64,10 +71,11 @@ public class drawGraph {
 
         // define layout
         mxFastOrganicLayout layout = new mxFastOrganicLayout(graph);
-        layout.setForceConstant(150);
+        layout.setForceConstant(100);
         
         // layout using morphing
         graph.getModel().beginUpdate();
+        
         try {
             layout.execute(graph.getDefaultParent());
         } 
@@ -89,8 +97,5 @@ public class drawGraph {
 
     }
 
-    public static void main(String[] args) {
-        drawGraph t = new drawGraph();
 
-    }
 }
