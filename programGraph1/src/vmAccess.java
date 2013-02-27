@@ -150,12 +150,18 @@ public class vmAccess {
 	    			 nextVertex = toGraph.addVertex( or.getValue(f).toString(), "Primitive");
 			    	 toGraph.addEdge(name, firstVertex, nextVertex);
 	    		  }
+	    		  
+	    		  //add connection without any of the objects fields
+	    		  else {
+	    	    	  nextVertex = toGraph.addVertex(vsub, "Object Reference");
+	    	    	  toGraph.addEdge(name, firstVertex, nextVertex);
+	    		  }
 	    	  }
 	    	  
 	    	  else {
 	    		  
-	    		  //Start depth first searching the object
-	    		  if(!visited.contains( or.uniqueID() ) )  DFS2(or, nextVertex);
+	    		  //Start depth first searching the object if it hasn't already been visited
+	    		  if(!visited.contains( or.uniqueID() ) )  recursiveDepthFirstSearch(or, nextVertex);
 		    	  nextVertex = toGraph.getVertex(vsub);
 		    	  toGraph.addEdge(name, firstVertex, nextVertex);
 		    	  
@@ -187,76 +193,8 @@ public class vmAccess {
 	  
   }
   
-  /*static void DFS(ObjectReference or, String n) throws ClassNotLoadedException{
-		Stack<objectName> s = new Stack<objectName>();
-		objectName popped;
-		String name = n;
-		Type t;
-		String value;
-		s.push(new objectName(or, n ));
-		boolean jl; 
-		boolean hasFields;
-		
-		while(!s.isEmpty()){
-			popped = s.pop();
-			ReferenceType rt = popped.or.referenceType();
-	    	List<Field> fields = rt.fields();
-
-	    	value = popped.or.toString();
-    		String displayValue = value.substring(12, value.length());
-    		
-    		//If vertex exists already 
-    		if(toGraph.getVertex(displayValue) == null) nextVertex = toGraph.addVertex(displayValue, "Object Reference");
-    		else nextVertex = toGraph.getVertex(displayValue); 
-    		
-    		currEdge = toGraph.addEdge(popped.name, currVertex, nextVertex);
-    		currVertex = nextVertex;
-	    	
-	    	
-    		if(!visited.contains( ((ObjectReference) popped.or).uniqueID()) ) {
-    			visited.add( ((ObjectReference) popped.or).uniqueID() );	
-    		
-		    	for(int i = 0; i < fields.size(); i++){
-		    		Field f = fields.get(i);
-		    		Value fieldValue = popped.or.getValue(f);
-		    		t = f.type();
-		    		name = f.name();
-			    	
-			    	if(fieldValue instanceof ObjectReference) { 	
-			    		
-			    		//check if the reference is a java. ADD To IF STATEMENT
-			    		value = fieldValue.toString();
-				    	String vsub = value.substring(12, value.length());
-				    	
-				    	//Does obeject have fields
-				    	hasFields = (( (ObjectReference) fieldValue).referenceType().allFields().size() != 0 );
-				    	
-				    	if(vsub.length() >= 9 && vsub.substring(0,9).equals("java.lang")) jl = true;
-				    	else jl = false;
-				    	
-				    	if(!jl && hasFields)  s.push( new objectName ((ObjectReference) fieldValue, name ) );
-				    	else addToGraph(t, name, fieldValue);
-
-			    	}
-			    		
-			    	else {
-			    		
-			    		//Process data and add to graph
-			    		addToGraph(t, name, fieldValue);
-			    			
-			    	}
-		    		
-		    	}
-		    	
-		    	
-    		}
-
-				
-		}
-		
-  }*/
   
-  static void DFS2(ObjectReference or, Vertex curr) throws ClassNotLoadedException{
+  static void recursiveDepthFirstSearch(ObjectReference or, Vertex curr) throws ClassNotLoadedException{
 	  
 	//Initialize variables
 	String value;  
@@ -297,7 +235,7 @@ public class vmAccess {
 				
 				if(!jl){
 					next = toGraph.addVertex(displayValue, "Object Reference");
-					DFS2((ObjectReference) fieldValue, next);
+					recursiveDepthFirstSearch((ObjectReference) fieldValue, next);
 				}
 				else {
 					

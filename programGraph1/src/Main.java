@@ -1,8 +1,15 @@
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.io.IOException;
-import java.util.Scanner;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import com.sun.jdi.ClassNotLoadedException;
 import com.sun.jdi.IncompatibleThreadStateException;
-
 
 public class Main {
 
@@ -14,48 +21,45 @@ public class Main {
 	 * @throws IncompatibleThreadStateException 
 	 */
 	
-	public static void main(String[] args) throws IOException, InterruptedException, IncompatibleThreadStateException, ClassNotLoadedException {
+	public static void main(String[] args)  {
 		
-		//Get the name of the file to run
-		/*System.out.println("Enter the name of the file to run");
-		Scanner s = new Scanner(System.in);
-		String file = s.next();*/
+		JFrame frame = new JFrame("Stack Visualization Program");
+		JTextField field = new JTextField("Enter Your Program Name Here");
+		JTextArea area = new JTextArea(10, 50);
+		JButton button = new JButton("Visualize Stack");
 		
+		JMenuBar bar = new JMenuBar();
+		JMenu fileMenu = new JMenu("File");
+		JMenuItem open = new JMenuItem("Open");
 		
+		button.setSize(new Dimension (50, 50));
+		button.setAlignmentX(0);
+		button.setAlignmentY(0);
+		button.setVisible(true);
+		button.setBounds(65, 30, 375, 85);
 		
-		//Compile the file and set it to wait for virtual 
-		//machine to connect
-		//runShell(file);
+		frame.getContentPane().add(area);
+		frame.getContentPane().add(button);
+		
+		field.addMouseListener(new MouseListener(field));
+		open.addActionListener(new FileOpener(frame, open, field));
+		button.addActionListener(new RunProgram(field));
+		
+        field.setBounds(frame.getHeight(), frame.getWidth(), frame.getWidth(), 150);
+		frame.add(area, BorderLayout.CENTER);
+		frame.add(field,BorderLayout.SOUTH);
 
-		
-		//Access the Virtual Machine
-		new vmAccess();
-		Data d = vmAccess.toGraph;
-		
-		//call function for visualizing the info in data object
-		new drawGraph(d);
+		frame.setBounds(0, 30, 400, 175);
+
+		fileMenu.add(open);
+		frame.setJMenuBar(bar);
+		bar.add(fileMenu);
+
+		frame.pack();
+		frame.setVisible(true);
 
 		
 	}
 	
-	  //Function that opens up the specified file using terminal commands and
-	  //lets this program connect to it with the virtual machine
-	  public static void runShell(String file){
-		  
-		  String cmd1 = "javac -g " + file;
-		  String run = file.substring(0, file.length() - 5);
-		  System.out.println(run);
-		  String cmd2 = "java -Xdebug -Xrunjdwp:transport=dt_socket,address=8000,server=y,suspend=n " + run;
-			  
-			  try{
-				    // Run command
-				    Runtime.getRuntime().exec(cmd1).waitFor();
-				    Runtime.getRuntime().exec(cmd2).waitFor();
-				 
-				    Thread.sleep(15);
-				    
-				} catch (Exception e) {
-				    e.printStackTrace(System.err); }
 
-	  }
 }

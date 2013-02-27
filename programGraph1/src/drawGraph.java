@@ -71,7 +71,7 @@ public class drawGraph {
 
         // define layout
         mxFastOrganicLayout layout = new mxFastOrganicLayout(graph);
-        layout.setForceConstant(100);
+        layout.setForceConstant(120);
         
         // layout using morphing
         graph.getModel().beginUpdate();
