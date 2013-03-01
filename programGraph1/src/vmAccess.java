@@ -6,14 +6,14 @@ import com.sun.jdi.*;
 
 public class vmAccess {
 
-   static Data toGraph = new Data();
-   static ArrayList<Long> visited = new ArrayList<Long>();
+   Data toGraph = new Data(); //Graph data to be drawn later
+   ArrayList<Long> visited = new ArrayList<Long>(); //Used to tell if an object has been DFS'ed yet
 
   public vmAccess()
       throws IOException, InterruptedException, IncompatibleThreadStateException, ClassNotLoadedException {
-	  
+		
     //Connect to virtual machine
-    VirtualMachine vm = new vmAcquirer().connect(8000);
+    VirtualMachine vm = new vmAcquirer().connect(8005);
     vm.suspend();
     
     //Access virtual machine's stack and run DFS to 
@@ -26,11 +26,11 @@ public class vmAccess {
   }
 
   /* Print the stack */
-  private static void accessStack(VirtualMachine vm) throws IncompatibleThreadStateException, ClassNotLoadedException  {
+  private void accessStack(VirtualMachine vm) throws IncompatibleThreadStateException, ClassNotLoadedException  {
 	 	    	
 	    	 	List<ThreadReference> tr = vm.allThreads();
 	    	 	Vertex currVertex;
-	
+	    	 
 		    	//Get number of stack frames
 		    	List<StackFrame> sf = tr.get(3).frames();
 			    int fc = tr.get(3).frameCount();
@@ -38,10 +38,11 @@ public class vmAccess {
 			    //Go through each stack frame and collect variables
 				for(int j = 0; j < fc; j++){
 					
-				//Set current vertex to the frame currently on
-				currVertex = toGraph.addVertex("Frame " + j, "Frame");
-					
 				   try {
+					   
+					   //Set current vertex to the frame currently on
+					   currVertex = toGraph.addVertex("Frame " + j, "Frame");
+					   
 					   List<LocalVariable> vv = sf.get(j).visibleVariables();
 					  
 					   //Go through each variable in the frame
@@ -75,7 +76,7 @@ public class vmAccess {
   }
   
   
-  static void addToGraph(Type type, String name,  Value value, Vertex from){
+  void addToGraph(Type type, String name,  Value value, Vertex from){
 	  
 	  Vertex nextVertex;
 	  Vertex firstVertex = from;
@@ -90,7 +91,7 @@ public class vmAccess {
 	    	  v = value.toString();
 	    	  
 	    	  //add Connection
-	    	  nextVertex = toGraph.addVertex(v.substring(12, v.length()), "String");
+	    	  nextVertex = toGraph.addVertex(v , "String");
 	    	  toGraph.addEdge(name, firstVertex, nextVertex);
 	    	  
 	      }
@@ -100,7 +101,7 @@ public class vmAccess {
 	    	  
 	    	  v = value.toString();
 	    	  
-	    	  //These are the behidn the scene items in the stack
+	    	  //These are the behind the scene items in the stack
 	    	  if(name.equals("b") || name.equals("buffer") || name.equals("args")) {
 	    		  
 	    		  nextVertex = toGraph.addVertex(v.substring(12, v.length()), "Array Reference");
@@ -110,7 +111,6 @@ public class vmAccess {
 	    	  else {
 	    		  
 		    	  //add Initial Connection
-
 		    	  nextVertex = toGraph.addVertex(v.substring(12, v.length()), "Array Reference");
 		    	  toGraph.addEdge(name,from, nextVertex);
 		    	  firstVertex = nextVertex;
@@ -138,31 +138,22 @@ public class vmAccess {
 	    	  v = value.toString();
 	    	  String vsub = v.substring(12, v.length());
 	    	  
-	    	  nextVertex = toGraph.addVertex(vsub, "Object Reference");
-	    	  
-	    	  
 	    	  //What to do if the object reference is a java.lang object
-	    	  if(vsub.length() >= 9 && vsub.substring(0,9).equals("java.lang")){
+	    	  if(vsub.length() >= 9 && vsub.substring(0,4).equals("java") ){
 	    		  
-	    		  //If that object is an Integer
-	    		  if(vsub.length() >= 17 && vsub.substring(0,17).equals("java.lang.Integer") ) {
-	    			 Field f =  or.referenceType().fieldByName("value") ;
-	    			 nextVertex = toGraph.addVertex( or.getValue(f).toString(), "Primitive");
-			    	 toGraph.addEdge(name, firstVertex, nextVertex);
-	    		  }
-	    		  
-	    		  //add connection without any of the objects fields
-	    		  else {
-	    	    	  nextVertex = toGraph.addVertex(vsub, "Object Reference");
-	    	    	  toGraph.addEdge(name, firstVertex, nextVertex);
-	    		  }
+	    		  handleJavaObjects(vsub, name, or, firstVertex);
+
 	    	  }
 	    	  
 	    	  else {
 	    		  
 	    		  //Start depth first searching the object if it hasn't already been visited
-	    		  if(!visited.contains( or.uniqueID() ) )  recursiveDepthFirstSearch(or, nextVertex);
-		    	  nextVertex = toGraph.getVertex(vsub);
+		    	  if(!visited.contains( or.uniqueID() ) ) {
+		    		  nextVertex = toGraph.addVertex(vsub, "Object Reference");
+		    		  recursiveDepthFirstSearch(or, nextVertex);
+		    	  }
+		    	  else nextVertex = toGraph.getVertex(vsub);
+		    	  
 		    	  toGraph.addEdge(name, firstVertex, nextVertex);
 		    	  
 	    	  }
@@ -193,8 +184,7 @@ public class vmAccess {
 	  
   }
   
-  
-  static void recursiveDepthFirstSearch(ObjectReference or, Vertex curr) throws ClassNotLoadedException{
+   void recursiveDepthFirstSearch(ObjectReference or, Vertex curr) throws ClassNotLoadedException{
 	  
 	//Initialize variables
 	String value;  
@@ -202,7 +192,6 @@ public class vmAccess {
 	Vertex next = null;
 	String name;
 	Type t;
-	boolean jl;
 	ObjectReference castObject;
 	  
 	//Set the object/vertex as visited
@@ -229,26 +218,7 @@ public class vmAccess {
 				displayValue = value.substring(12, value.length());
 				castObject = (ObjectReference) fieldValue;
 				
-				//Check if the object is a java.lang one
-				if(displayValue.length() >= 9 && displayValue.substring(0,9).equals("java.lang")) jl = true;
-		    	else jl = false;
-				
-				if(!jl){
-					next = toGraph.addVertex(displayValue, "Object Reference");
-					recursiveDepthFirstSearch((ObjectReference) fieldValue, next);
-				}
-				else {
-					
-					//If the object is an integer class
-					if(displayValue.length() >= 17 && displayValue.substring(0,17).equals("java.lang.Integer") ) {
-		    			 f =  castObject.referenceType().fieldByName("value") ;
-		    			 next = toGraph.addVertex( castObject.getValue(f).toString(), "Primitive");
-		    		  }
-					
-				}
-				
-				//add edge to graph
-				toGraph.addEdge(name, curr, next);
+				addToGraph(t, name, fieldValue, curr);
 			}
 			
 			//If vertex exists already
@@ -258,8 +228,7 @@ public class vmAccess {
 				displayValue = value.substring(12, value.length());
 				
 				next = toGraph.getVertex(displayValue);
-				toGraph.addEdge(name, curr, next);
-				
+				toGraph.addEdge(name, curr, next);	
 			}
 		}
 		
@@ -269,7 +238,38 @@ public class vmAccess {
 		}
 		
   	}
+	    
 	  
+  }
+  
+  void handleJavaObjects(String value, String name, ObjectReference or, Vertex currVertex) throws ClassNotLoadedException{
+	  
+	  Vertex nextVertex;
+	  
+	  //If that object is an Integer
+	  if(value.length() >= 17 && value.substring(0,17).equals("java.lang.Integer") ) {
+		 Field f =  or.referenceType().fieldByName("value") ;
+		 nextVertex = toGraph.addVertex( or.getValue(f).toString(), "Primitive");
+    	 toGraph.addEdge(name, currVertex, nextVertex);
+	  }
+	  
+	  //If the object is an arraylist
+	  else if(value.length() >= 19 && value.substring(0,19).equals("java.util.ArrayList") ) {
+		  
+		 nextVertex = toGraph.addVertex(value, "Object Reference");
+    	 toGraph.addEdge(name, currVertex, nextVertex); 
+		  
+		 Field f = or.referenceType().fieldByName("elementData");
+		 Value v = or.getValue(f);
+		 Type t = f.type();
+		 addToGraph(t, f.name(),  v, nextVertex);
+		 
+	  }
+	  
+	  else {
+    	  nextVertex = toGraph.addVertex(value, "Object Reference");
+    	  toGraph.addEdge(name, currVertex, nextVertex);
+	  }
 	  
 	  
   }

@@ -5,8 +5,8 @@ public class Data {
 	int vid;
 	int eid;
 	
-	ArrayList<Vertex> vertices = new ArrayList<Vertex>(); //vertex id and relevant info
-	ArrayList<Edge> edges = new ArrayList<Edge>(); //edge id and name
+	public ArrayList<Vertex> vertices = new ArrayList<Vertex>(); //vertex id and relevant info
+	public ArrayList<Edge> edges = new ArrayList<Edge>(); //edge id and name
 	
 	public Data(){
 		this.vid = 0;
@@ -26,7 +26,6 @@ public class Data {
 		
 		return edges.get(eid - 1);
 	}
-	
 	
 	public Vertex getVertex(String value){
 		

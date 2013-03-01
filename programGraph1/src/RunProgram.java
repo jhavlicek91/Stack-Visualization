@@ -17,14 +17,20 @@ public class RunProgram implements ActionListener {
 	public void actionPerformed(ActionEvent arg0) {
 		
 		String file = text.getText();
+		String program;
 		int fileLength = file.length();
 		
 		if(fileLength > 5 && file.substring(fileLength - 5 , fileLength).equals(".java")) {
-			runShell(file);
+			//program = runShell(file);
 			
 			//Access the Virtual Machine
 			try {
-				new vmAccess();
+				vmAccess vma = new vmAccess();
+				
+				Data d = vma.toGraph;
+				
+				//call function for visualizing the info in data object
+				drawGraph dg = new drawGraph(d, "Inr");
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -38,10 +44,7 @@ public class RunProgram implements ActionListener {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			Data d = vmAccess.toGraph;
 			
-			//call function for visualizing the info in data object
-			new drawGraph(d);
 		}
 		
 		else {
@@ -51,26 +54,24 @@ public class RunProgram implements ActionListener {
 	
 	//Function that opens up the specified file using terminal commands and
 	//lets this program connect to it with the virtual machine
-	public static void runShell(String file){
+	public static String runShell(String file){
 		  
 		  String cmd1 = "javac -g " + file;
 		  String run = file.substring(0, file.length() - 5);
-		  System.out.println(run+"g");
-		  String cmd2 = "java -Xdebug -Xrunjdwp:transport=dt_socket,address=8000,server=y,suspend=y " + run;
+		  String cmd2 = "java -Xdebug -Xrunjdwp:transport=dt_socket,address=8005,server=y,suspend=n " + run;
 			  
 			  try{
 				    // Run commands
 				    Process p1 = Runtime.getRuntime().exec(cmd1);
 				    int exitCode = p1.waitFor();
-				    System.out.println(exitCode);
 				    Process p2 = Runtime.getRuntime().exec(cmd2);
-				    exitCode = p2.waitFor();
-				    System.out.println(exitCode);
 				 
-				    Thread.sleep(15);
+				    Thread.sleep(2000);
 				    
 				} catch (Exception e) {
 				    e.printStackTrace(System.err); }
+			  
+			  return run;
 
 	  }
 
