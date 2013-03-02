@@ -11,6 +11,7 @@ public class MouseListener implements java.awt.event.MouseListener {
 	}
 
 	@Override
+	//If textbox is clicked erase the text in it
 	public void mouseClicked(MouseEvent arg0) {
 		text.setText("");
 

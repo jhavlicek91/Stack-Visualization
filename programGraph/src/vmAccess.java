@@ -3,7 +3,6 @@ import java.util.ArrayList;
 import java.util.List;
 import com.sun.jdi.*;
 
-
 public class vmAccess {
 
    Data toGraph = new Data(); //Graph data to be drawn later
@@ -28,50 +27,50 @@ public class vmAccess {
   /* Print the stack */
   private void accessStack(VirtualMachine vm) throws IncompatibleThreadStateException, ClassNotLoadedException  {
 	 	    	
-	    	 	List<ThreadReference> tr = vm.allThreads();
-	    	 	Vertex currVertex;
+	  List<ThreadReference> tr = vm.allThreads();
+	  Vertex currVertex;
 	    	 
-		    	//Get number of stack frames
-		    	List<StackFrame> sf = tr.get(3).frames();
-			    int fc = tr.get(3).frameCount();
+      //Get number of stack frames in the relevant thread
+      List<StackFrame> sf = tr.get(3).frames(); 
+      int fc = tr.get(3).frameCount();
 			    			    
-			    //Go through each stack frame and collect variables
-				for(int j = 0; j < fc; j++){
+	  //Go through each stack frame and collect variables
+	  for(int j = 0; j < fc; j++){
 					
-				   try {
-					   
-					   //Set current vertex to the frame currently on
-					   currVertex = toGraph.addVertex("Frame " + j, "Frame");
-					   
-					   List<LocalVariable> vv = sf.get(j).visibleVariables();
-					  
-					   //Go through each variable in the frame
-					   for(int k = 0; k < vv.size(); k++){
-						   
-						  //Only create a vertex for a frame once
-						  if(toGraph.getVertex("Frame " + j) == null) currVertex = toGraph.addVertex("Frame " + j, "Frame");
-				          else currVertex = toGraph.getVertex("Frame " + j);
-						  
-						  //Gather data from the variable
-						  LocalVariable ll = vv.get(k);
-						  Value value = sf.get(j).getValue(ll);
-						  Type type = ll.type();
-						  String name = ll.name();
-						  
-						  //add variable from stack frame to the graph
-						  addToGraph(type, name, value, currVertex);
-					   }
-				   }
+	     try {
+	        //Set current vertex to the frame currently on
+		    currVertex = toGraph.addVertex("Frame " + j, "Frame");
+		    
+		    List<LocalVariable> vv = sf.get(j).visibleVariables();
+		    
+		    //Go through each variable in the frame
+		    for(int k = 0; k < vv.size(); k++){
 				   
-				    catch (AbsentInformationException e) {
-						// TODO Auto-generated catch block
-				    	System.out.println("Cannot trace Stack frame" + j);
-				    	} 
-				   		   
-				}
+	    		//Only create a vertex for a frame once
+			    if(toGraph.getVertex("Frame " + j) == null) currVertex = toGraph.addVertex("Frame " + j, "Frame");
+				else currVertex = toGraph.getVertex("Frame " + j);
+						  
+			    //Gather data from the variable
+			    LocalVariable ll = vv.get(k);
+			    Value value = sf.get(j).getValue(ll);
+				Type type = ll.type();
+				String name = ll.name();		 
 				
-				//Connect frames to each other through edges
-				for(int m = 0; m < fc -1; m++) toGraph.addEdge("Frame", toGraph.getVertex("Frame " + m), toGraph.getVertex("Frame " + (m+1)));
+				//add variable from stack frame to the graph
+				addToGraph(type, name, value, currVertex);	  
+						  
+		    }
+        }
+				   
+        catch (AbsentInformationException e) {
+        	// TODO Auto-generated catch block
+	    	System.out.println("Cannot trace Stack frame" + j);			
+	    } 
+				   		   
+	}
+				
+	//Connect frames to each other through edges
+    for(int m = 0; m < fc -1; m++) toGraph.addEdge("Frame", toGraph.getVertex("Frame " + m), toGraph.getVertex("Frame " + (m+1)));
 					   			    
   }
   
@@ -116,7 +115,6 @@ public class vmAccess {
 		    	  firstVertex = nextVertex;
 		    	  
 		    	  //Get array values and component type of array
-		    	  
 		    	  ArrayReference ar = (ArrayReference) value;
 		    	  List<Value> arrayValues = ar.getValues();
 		    	  ArrayType newType = (ArrayType) type;
@@ -140,9 +138,7 @@ public class vmAccess {
 	    	  
 	    	  //What to do if the object reference is a java.lang object
 	    	  if(vsub.length() >= 9 && vsub.substring(0,4).equals("java") ){
-	    		  
 	    		  handleJavaObjects(vsub, name, or, firstVertex);
-
 	    	  }
 	    	  
 	    	  else {
@@ -168,7 +164,7 @@ public class vmAccess {
 	    	  
 	      }
 	      
-	    //What to do if the thing to add is null
+	      //What to do if the thing to add is null
 	      else {
 	    	  
 	    	  //add Connection
@@ -179,7 +175,7 @@ public class vmAccess {
 	  }
 	  
 	  catch (ClassNotLoadedException e) {
-			// TODO Auto-generated catch block
+			//TODO Auto-generated catch block
 			e.printStackTrace(); }
 	  
   }
@@ -199,8 +195,7 @@ public class vmAccess {
 	  
 	ReferenceType rt = or.referenceType();
   	List<Field> fields = rt.fields();
-  	
-  	
+  	 	
   	//Go through all of the objects fields
   	for(int i = 0; i < fields.size(); i++){
   		
@@ -208,8 +203,7 @@ public class vmAccess {
 		Field f = fields.get(i);
 		Value fieldValue = or.getValue(f);
 		name = f.name();
-		t = f.type();
-		
+		t = f.type();	
 		
 		if(fieldValue instanceof ObjectReference){
 			if(!visited.contains( ((ObjectReference) fieldValue).uniqueID()) ) {
@@ -270,10 +264,7 @@ public class vmAccess {
     	  nextVertex = toGraph.addVertex(value, "Object Reference");
     	  toGraph.addEdge(name, currVertex, nextVertex);
 	  }
-	  
-	  
+	  	  
   }
   
-
-
 }

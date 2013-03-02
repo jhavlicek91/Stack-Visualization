@@ -16,21 +16,26 @@ public class RunProgram implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent arg0) {
 		
+		//Get the text in the field when the button is clicked
 		String file = text.getText();
 		String program;
 		int fileLength = file.length();
 		
+		//Only runs the program if the file in the textbox ends in .java
 		if(fileLength > 5 && file.substring(fileLength - 5 , fileLength).equals(".java")) {
-			//program = runShell(file);
+			
+			//Start running the program in the virtual machine
+			program = runShell(file);
 			
 			//Access the Virtual Machine
 			try {
-				vmAccess vma = new vmAccess();
 				
+				//Gather data from the program in the virtual machine
+				vmAccess vma = new vmAccess();
 				Data d = vma.toGraph;
 				
 				//call function for visualizing the info in data object
-				drawGraph dg = new drawGraph(d, "Inr");
+				new drawGraph(d, program);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -48,6 +53,7 @@ public class RunProgram implements ActionListener {
 		}
 		
 		else {
+			//if the file does not end in .java
 			text.setText("Enter the name of a .java file");
 		}
 	}
@@ -62,11 +68,10 @@ public class RunProgram implements ActionListener {
 			  
 			  try{
 				    // Run commands
-				    Process p1 = Runtime.getRuntime().exec(cmd1);
-				    int exitCode = p1.waitFor();
-				    Process p2 = Runtime.getRuntime().exec(cmd2);
+				   Runtime.getRuntime().exec(cmd1).waitFor();
+				   Runtime.getRuntime().exec(cmd2);
 				 
-				    Thread.sleep(2000);
+				   Thread.sleep(2000);
 				    
 				} catch (Exception e) {
 				    e.printStackTrace(System.err); }

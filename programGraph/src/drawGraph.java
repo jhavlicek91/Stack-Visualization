@@ -11,10 +11,12 @@ import java.util.Hashtable;
 
 public class drawGraph {
 
+	static JFrame f; //static so that there is only one frame open at a time
+	
     public drawGraph(Data d, String name) {
     	
     	//Create JFrame
-        JFrame f = new JFrame(name);
+        f = new JFrame(name);
         f.setSize(500, 500);
         f.setLocation(300, 200);
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

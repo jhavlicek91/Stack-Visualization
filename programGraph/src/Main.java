@@ -22,6 +22,7 @@ public class Main {
 	
 	public static void main(String[] args)  {
 		
+		//Intialize parts of the interface
 		JFrame frame = new JFrame("Stack Visualization Program");
 		JTextField field = new JTextField("Enter Your Program Name Here");
 		JButton button = new JButton("Visualize Stack");
